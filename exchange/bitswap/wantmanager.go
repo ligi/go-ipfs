@@ -58,6 +58,8 @@ type msgQueue struct {
 	out     bsmsg.BitSwapMessage
 	network bsnet.BitSwapNetwork
 
+	sender bsnet.MessageSender
+
 	refcnt int
 
 	work chan struct{}
@@ -128,6 +130,14 @@ func (pm *WantManager) startPeerHandler(p peer.ID) *msgQueue {
 	mq.out = fullwantlist
 	mq.work <- struct{}{}
 
+	s, err := pm.network.NewMessageSender(pm.ctx, p)
+	if err != nil {
+		log.Error("error opening stream to peer: ", err)
+		return nil
+	}
+
+	mq.sender = s
+
 	pm.peers[p] = mq
 	go mq.runQueue(pm.ctx)
 	return mq
@@ -186,11 +196,8 @@ func (mq *msgQueue) doWork(ctx context.Context) {
 	mq.out = nil
 	mq.outlk.Unlock()
 
-	sendctx, cancel := context.WithTimeout(ctx, time.Minute*5)
-	defer cancel()
-
 	// send wantlist updates
-	err = mq.network.SendMessage(sendctx, mq.p, wlm)
+	err = mq.sender.SendMsg(wlm)
 	if err != nil {
 		log.Infof("bitswap send error: %s", err)
 		// TODO: what do we do if this fails?

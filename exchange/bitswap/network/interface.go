@@ -25,7 +25,13 @@ type BitSwapNetwork interface {
 
 	ConnectTo(context.Context, peer.ID) error
 
+	NewMessageSender(context.Context, peer.ID) (MessageSender, error)
+
 	Routing
+}
+
+type MessageSender interface {
+	SendMsg(bsmsg.BitSwapMessage) error
 }
 
 // Implement Receiver to receive messages from the BitSwapNetwork
