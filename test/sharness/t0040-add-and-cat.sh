@@ -373,6 +373,11 @@ test_expect_success "ipfs add --only-hash succeeds" '
     echo "unknown content for only-hash" | ipfs add --only-hash -q > oh_hash
 '
 
+test_expect_success "'ipfs add --no-pin does not pin" '
+	echo "ipfs add --no-pin test - fslkfjdlsk" | ipfs add --no-pin -q | head -1 > hash
+	test_must_fail ipfs pin ls $(cat hash)
+'
+
 #TODO: this doesn't work when online hence separated out from test_add_cat_file
 test_expect_success "ipfs cat file fails" '
     test_must_fail ipfs cat $(cat oh_hash)
