@@ -26,9 +26,11 @@ type WantManager struct {
 
 	network bsnet.BitSwapNetwork
 	ctx     context.Context
+	cancel  func()
 }
 
 func NewWantManager(ctx context.Context, network bsnet.BitSwapNetwork) *WantManager {
+	ctx, cancel := context.WithCancel(ctx)
 	return &WantManager{
 		incoming:   make(chan []*bsmsg.Entry, 10),
 		connect:    make(chan peer.ID, 10),
@@ -38,6 +40,7 @@ func NewWantManager(ctx context.Context, network bsnet.BitSwapNetwork) *WantMana
 		wl:         wantlist.NewThreadSafe(),
 		network:    network,
 		ctx:        ctx,
+		cancel:     cancel,
 	}
 }
 
@@ -160,6 +163,7 @@ func (pm *WantManager) stopPeerHandler(p peer.ID) {
 }
 
 func (mq *msgQueue) runQueue(ctx context.Context) {
+	defer mq.sender.Close()
 	for {
 		select {
 		case <-mq.work: // there is work to be done

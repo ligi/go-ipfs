@@ -32,6 +32,7 @@ type BitSwapNetwork interface {
 
 type MessageSender interface {
 	SendMsg(bsmsg.BitSwapMessage) error
+	Close() error
 }
 
 // Implement Receiver to receive messages from the BitSwapNetwork

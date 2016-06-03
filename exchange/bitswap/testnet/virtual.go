@@ -123,6 +123,10 @@ func (mp *messagePasser) SendMsg(m bsmsg.BitSwapMessage) error {
 	return mp.net.SendMessage(mp.ctx, mp.local, mp.target, m)
 }
 
+func (mp *messagePasser) Close() error {
+	return nil
+}
+
 func (n *networkClient) NewMessageSender(ctx context.Context, p peer.ID) (bsnet.MessageSender, error) {
 	return &messagePasser{
 		net:    n.network,
