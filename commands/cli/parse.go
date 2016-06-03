@@ -93,11 +93,19 @@ func parseOpts(args []string, root *cmds.Command) (
 		if _, ok := opts[name]; ok {
 			return false, fmt.Errorf("Duplicate values for option '%s'", name)
 		}
-
+		reverse := false
 		optDef, found := optDefs[name]
 		if !found {
-			err = fmt.Errorf("Unrecognized option '%s'", name)
-			return false, err
+			if strings.HasPrefix(name, "no-") {
+				oldname := name
+				name = name[3:]
+				optDef, found = optDefs[name]
+				if !found || optDef.Type() != cmds.Bool {
+					err = fmt.Errorf("Unrecognized option '%s'", oldname)
+					return false, err
+				}
+				reverse = true
+			}
 		}
 		// mustUse implies that you must use the argument given after the '='
 		// eg. -r=true means you must take true into consideration
@@ -107,16 +115,16 @@ func parseOpts(args []string, root *cmds.Command) (
 		//arg == nil implies the flag was specified without an argument
 		if optDef.Type() == cmds.Bool {
 			if arg == nil || !mustUse {
-				opts[name] = true
+				opts[name] = true != reverse
 				return false, nil
 			}
 			argVal := strings.ToLower(*arg)
 			switch argVal {
 			case "true":
-				opts[name] = true
+				opts[name] = true != reverse
 				return true, nil
 			case "false":
-				opts[name] = false
+				opts[name] = false != reverse
 				return true, nil
 			default:
 				return true, fmt.Errorf("Option '%s' takes true/false arguments, but was passed '%s'", name, argVal)
